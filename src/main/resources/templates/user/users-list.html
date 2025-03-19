@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Список пользователей</title>
+  <style>
+
+    .table {
+      float: left;
+      width: 100%;
+    }
+
+  </style>
+  <div th:replace="~{./fragments/header :: header}"></div>
+</head>
+<body>
+<div th:replace="~{./fragments/navbar :: navbar}"></div>
+
+<div class="container">
+  <div class="row col-me-10">
+    <h2>List of Registered Users</h2>
+  </div>
+  <a th:href="@{/users/addForm}" class="btn btn-primary">Add User</a>
+  <a th:href="@{/users/deleteAll}" class="btn btn-primary">delete All User</a>
+  <br/><br/>
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+    <tr>
+      <th>Username</th>
+      <th>Email</th>
+      <th>enabled</th>
+      <th></th>
+      <th>expiryDate</th>
+      <th>lastFailedLoginAttempt</th>
+      <th>failedLoginAttempts</th>
+      <th></th>
+      <th>passwordUpdatedAt</th>
+      <th>createdAt</th>
+      <th>updatedAt</th>
+      <th>roles</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+      <td th:text="${user.username}"></td>
+      <td th:text="${user.email}"></td>
+      <td th:text="${user.enabled}"></td>
+      <td><button class="btn btn-primary" type="submit">Block</button></td>
+      <td th:text="${user.expiryDate}"></td>
+      <td th:text="${user.lastFailedLoginAttempt}"></td>
+      <td th:text="${user.failedLoginAttempts}"></td>
+      <td><button class="btn btn-primary" type="submit"> RESET</button></td>
+      <td th:text="${user.passwordUpdatedAt}"></td>
+      <td th:text="${user.createdAt}"></td>
+      <td th:text="${user.updatedAt}"></td>
+      <td>
+      <ul>
+        <li th:each="role : ${user.roles}" th:text="${role.roleEnum}"></li>
+      </ul>
+      </td>
+      <td>
+        <select id="rolesSelect" name="roles" multiple size="3">
+          <option th:each="role : ${roles}"
+                  th:value="${role.roleEnum}"
+                  th:text="${role.roleEnum.name}">
+          </option>
+        </select>
+      </td>
+      <td><button class="btn btn-primary" type="submit">Save Roles</button> </td>
+      <td th:text="${user.employee}"></td>
+      <td><button class="btn btn-primary" type="submit">assign Employee To User</button> </td>
+      <td><button class="btn btn-primary" type="submit">EDIT</button></td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<div th:replace="~{./fragments/footer :: footer}"></div>
+</body>
+</html>

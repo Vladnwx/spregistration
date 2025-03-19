@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title></title>
+    <div th:replace="~{./fragments/header :: header}"></div>
+</head>
+<body>
+<div th:replace="~{./fragments/navbar :: navbar}"></div>
+
+
+<h1>WELCOME <span th:text="${username}"></span></h1>
+
+
+<div th:replace="~{./fragments/footer :: footer}"></div>
+</body>
+</html>
