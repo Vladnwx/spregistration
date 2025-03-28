@@ -1,0 +1,67 @@
+src/
+├── main/
+│   ├── java/
+│   │   └── ru/
+│   │       └── savelevvn/
+│   │           ├── SPRegistration.java                 # Главный класс приложения
+│   │           ├── config/
+│   │           │   ├── SecurityConfig.java             # Конфигурация безопасности
+│   │           │   ├── JwtConfig.java                  # Настройки JWT
+│   │           │   └── InitialDataConfig.java          # Инициализация тестовых данных
+│   │           ├── model/
+│   │           │   ├── User.java                      # Модель пользователя
+│   │           │   ├── UserRole.java                   # Роли пользователей
+│   │           │   ├── UserPrivilege.java              # Привилегии
+│   │           │   ├── PasswordResetToken.java         # Токен сброса пароля
+│   │           │   ├── EmailVerificationToken.java     # Токен подтверждения email
+│   │           │   ├── TwoFactorAuth.java             # Настройки 2FA
+│   │           │   └── AuditLog.java                   # Логи действий
+│   │           ├── repository/
+│   │           │   ├── UserRepository.java             # Репозиторий пользователей
+│   │           │   ├── PasswordResetTokenRepository.java
+│   │           │   ├── EmailVerificationTokenRepository.java
+│   │           │   ├── TwoFactorAuthRepository.java
+│   │           │   └── AuditLogRepository.java
+│   │           ├── service/
+│   │           │   ├── UserService.java                # Сервис пользователей
+│   │           │   ├── AuthService.java                # Сервис аутентификации
+│   │           │   ├── PasswordResetService.java       # Восстановление пароля
+│   │           │   ├── EmailVerificationService.java   # Подтверждение email
+│   │           │   ├── TwoFactorAuthService.java      # 2FA
+│   │           │   ├── EmailService.java               # Отправка email
+│   │           │   ├── AuditLogService.java            # Логирование действий
+│   │           │   └── SessionManagementService.java   # Управление сессиями
+│   │           ├── controller/
+│   │           │   ├── AuthController.java             # Контроллер аутентификации
+│   │           │   ├── UserController.java             # Контроллер пользователей
+│   │           │   ├── PasswordResetController.java    # Восстановление пароля
+│   │           │   ├── TwoFactorAuthController.java    # 2FA
+│   │           │   ├── SessionController.java          # Управление сессиями
+│   │           │   └── AdminController.java            # Админ-панель
+│   │           ├── security/
+│   │           │   └── JwtAuthenticationFilter.java    # JWT фильтр
+│   │           ├── aspect/
+│   │           │   └── AuditLoggingAspect.java         # Аспект для логирования
+│   │           └── exception/
+│   │               └── GlobalExceptionHandler.java      # Обработчик исключений
+│   └── resources/
+│       ├── static/
+│       │   ├── css/                                    # CSS стили
+│       │   └── js/                                     # JavaScript файлы
+│       ├── templates/
+│       │   ├── login.html                              # Страница входа
+│       │   ├── register.html                           # Страница регистрации
+│       │   ├── dashboard.html                          # Основная страница
+│       │   ├── admin/
+│       │   │   ├── users.html                          # Управление пользователями
+│       │   │   └── audit-logs.html                     # Просмотр логов
+│       │   ├── password/
+│       │   │   ├── reset-request.html                  # Запрос сброса пароля
+│       │   │   └── reset.html                          # Страница сброса пароля
+│       │   └── 2fa/
+│       │       ├── setup.html                          # Настройка 2FA
+│       │       └── verify.html                         # Верификация 2FA кода
+│       ├── application.properties                      # Основные настройки
+│       └── secret.properties                           # Секретные данные (в .gitignore)
+├── test/                                              # Тесты
+└── build.gradle.kts                                   # Файл сборки

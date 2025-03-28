@@ -1,31 +1,41 @@
 package ru.savelevvn.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import ru.savelevvn.model.User;
-import ru.savelevvn.service.AuthService;
-
+import ru.savelevvn.service.UserService;
 import java.util.List;
+import java.util.Optional;
 
-@Slf4j
-@Controller
-@RequestMapping(value = "/users")
+@RestController
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    @Autowired
-    private AuthService authService;
+    private final UserService userService;
 
-    @GetMapping
-    public ModelAndView getAllUsers() {
-        log.info("Slf4j: " + this.getClass().getName() + " Method " + Thread.currentThread().getStackTrace()[1].getMethodName() + " executed");
-        ModelAndView modelAndView = new ModelAndView("./user/users-list");
-        List<User> users = authService.findAllUsers();
-        modelAndView.addObject("users", users);
-        return modelAndView;
+    @PostMapping
+    public User create(@RequestBody User user) {
+        return userService.create(user);
     }
 
+    @GetMapping("/{id}")
+    public Optional<User> findById(@PathVariable Long id) {
+        return userService.findById(id);
+    }
+
+    @GetMapping
+    public List<User> findAll() {
+        return userService.findAll();
+    }
+
+    @PutMapping("/{id}")
+    public User update(@PathVariable Long id, @RequestBody User user) {
+        user.setId(id);
+        return userService.update(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        userService.delete(id);
+    }
 }

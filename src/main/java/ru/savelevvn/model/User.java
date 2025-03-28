@@ -1,35 +1,54 @@
 package ru.savelevvn.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import ru.savelevvn.model.UserRole;
-import ru.savelevvn.model.UserPrivilege;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {@Index(name = "idx_user_email", columnList = "email"),
+                @Index(name = "idx_user_username", columnList = "username")})
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 50)
     private String username;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive = true; // Активность учетной записи (по умолчанию true)
+
+    @Column(name = "account_non_locked", nullable = false)
+    private boolean accountNonLocked  = false; // Активность учетной записи (по умолчанию false)
+
+    @Column(name = "credentials_non_expired", nullable = false)
+    private boolean credentialsNonExpired = true;
+
+    @Column(name = "account_non_expired", nullable = false)
+    private boolean accountNonExpired = true;
+
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -51,14 +70,20 @@ public class User {
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts = 0; // Количество неудачных попыток входа
 
-    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Set<UserRole> roles = new HashSet<>();
+    private UserRole role = UserRole.ROLE_USER;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_privileges",
+            joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "privilege")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role = UserRole.ROLE_USER; // Роль по умолчанию
+    @Builder.Default
+    private Set<UserPrivilege> additionalPrivileges = new HashSet<>();
+
+    public boolean hasPrivilege(UserPrivilege privilege) {
+        return role.hasPrivilege(privilege) || additionalPrivileges.contains(privilege);
+    }
 
 }
