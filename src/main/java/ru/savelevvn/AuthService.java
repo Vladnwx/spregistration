@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableAsync // Добавляем поддержку асинхронных методов
-public class SPRegistration {
+public class AuthService {
     public static void main(String[] args) {
-        SpringApplication.run(SPRegistration.class, args);
+        SpringApplication.run(AuthService.class, args);
     }
 }

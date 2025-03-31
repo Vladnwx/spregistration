@@ -1,0 +1,124 @@
+// Плагины для проекта
+plugins {
+    id 'java' // Базовый плагин для Java-проектов
+    id 'org.springframework.boot' version '3.4.2' // Плагин Spring Boot
+    id 'io.spring.dependency-management' version '1.1.7' // Управление версиями зависимостей Spring
+    id 'io.freefair.lombok' version '8.6' // Плагин для Lombok
+    id 'org.flywaydb.flyway' version '9.22.3' // плагин Flyway
+}
+
+// Основные настройки проекта
+group = 'ru.savelevvn' // Группа проекта (обычно домен наоборот)
+version = '1.0-SNAPSHOT' // Версия проекта (SNAPSHOT означает разработку)
+
+// Репозитории для загрузки зависимостей
+repositories {
+    mavenCentral() // Основной репозиторий Maven
+}
+
+// Зависимости проекта
+dependencies {
+    // ===== Spring Boot стартеры =====
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // Spring Data JPA
+    implementation 'org.springframework.boot:spring-boot-starter-security' // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-web' // Spring MVC
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleaf шаблонизатор
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // Валидация данных
+    implementation 'org.springframework.boot:spring-boot-starter-mail' // Отправка email
+
+    // ===== Lombok =====
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // ===== Базы данных =====
+    runtimeOnly 'com.h2database:h2' // H2 для разработки (автоматически подключается в dev-профиле)
+    runtimeOnly 'org.postgresql:postgresql' // PostgreSQL для продакшена (используется в prod-профиле)
+
+    // ===== JWT (JSON Web Tokens) =====
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // API для работы с JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Реализация JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // Jackson поддержка для JWT
+
+    // ===== Тестирование =====
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine' // Исключаем старый JUnit
+    }
+    testImplementation 'org.springframework.security:spring-security-test' // Тесты безопасности
+    testImplementation 'com.h2database:h2' // H2 для тестов (используется в test-профиле)
+}
+
+// Настройка тестов
+test {
+    useJUnitPlatform() // Используем JUnit 5
+    systemProperty 'spring.profiles.active', 'test' // Автоматически активируем test-профиль
+}
+// Задача для применения миграций Flyway
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/auth_service'
+    user = 'admin'
+    password = 'admin'
+    locations = ['filesystem:src/main/resources/db/migration']
+    baselineOnMigrate = true
+}
+
+// ===== Кастомные задачи =====
+
+// Задача для увеличения минорной версии проекта
+task incrementMinorVersion {
+    doLast {
+        // Разбираем текущую версию на части
+        def versionParts = version.split("\\.")
+        def majorVersion = versionParts[0].toInteger()
+        def minorVersion = versionParts[1].split("-")[0].toInteger()
+        def newVersion = "${majorVersion}.${minorVersion + 1}-SNAPSHOT"
+
+        // Обновляем версию в build.gradle
+        def buildFile = file('build.gradle')
+        def updatedContent = buildFile.text.replace(
+                "version = '${version}'",
+                "version = '${newVersion}'"
+        )
+        buildFile.write(updatedContent)
+
+        println "Версия увеличена до: ${newVersion}"
+    }
+}
+
+// Настраиваем выполнение incrementMinorVersion после сборки
+build.finalizedBy incrementMinorVersion
+
+// Задача для автоматического коммита изменения версии
+task commitVersionChange {
+    doLast {
+        // Добавляем измененный файл в git
+        exec {
+            commandLine 'git', 'add', 'build.gradle'
+        }
+        // Создаем коммит
+        exec {
+            commandLine 'git', 'commit', '-m', "Автоматическое увеличение версии до ${version}"
+        }
+        println "Изменения версии закоммичены"
+    }
+}
+
+// ===== Задачи для запуска с разными профилями =====
+
+// Задача для запуска с dev-профилем (H2 в файловом режиме)
+task bootRunDev(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+    group = 'application' // Группа для организации задач
+    description = 'Запуск приложения с dev-профилем (H2 файловая БД)'
+    systemProperty 'spring.profiles.active', 'dev'
+}
+
+// Задача для запуска с prod-профилем (PostgreSQL)
+task bootRunProd(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+    group = 'application'
+    description = 'Запуск приложения с prod-профилем (PostgreSQL)'
+    systemProperty 'spring.profiles.active', 'prod'
+    // Можно добавить дополнительные параметры:
+    // systemProperty 'DB_HOST', 'localhost'
+    // systemProperty 'DB_PASSWORD', 'yourpassword'
+}

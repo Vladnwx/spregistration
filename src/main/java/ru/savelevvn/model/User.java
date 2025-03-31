@@ -1,26 +1,28 @@
 package ru.savelevvn.model;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Data
 @Entity
-@Table(name = "users",
-        indexes = {@Index(name = "idx_user_email", columnList = "email"),
-                @Index(name = "idx_user_username", columnList = "username")})
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class User {
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_username", columnList = "username")
+})
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,61 +31,135 @@ public class User {
     private String username;
 
     @Column(nullable = false)
-    private String password;
+    private String password; 
 
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-
-    @Column(name = "account_non_locked", nullable = false)
-    private boolean accountNonLocked  = false; // Активность учетной записи (по умолчанию false)
-
-    @Column(name = "credentials_non_expired", nullable = false)
-    private boolean credentialsNonExpired = true;
-
-    @Column(name = "account_non_expired", nullable = false)
-    private boolean accountNonExpired = true;
-
-    @Column(name = "enabled", nullable = false)
-    private boolean enabled = true;
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // Дата создания учетной записи
+    private LocalDateTime createdAt; //дата и время создания аккаунта
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin; //последний успешный логин
+
+    @Column(name = "last_failed_login")
+    private LocalDateTime lastFailedLogin; //последний неудачный логин
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0; //количество неудачных попыток входа
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // Дата обновления учетной записи
+    private LocalDateTime updatedAt; //время последнего обновления записи
+
 
     @Column(name = "password_updated_at")
-    private LocalDateTime passwordUpdatedAt; // Дата обновления пароля
+    private LocalDateTime passwordUpdatedAt; //время последнего обновления пароля
+
 
     @Column(name = "account_expires_at")
-    private LocalDateTime accountExpiresAt; // Дата окончания действия учетной записи
+    private LocalDateTime accountExpiresAt; //время истечения аккаунта
 
-    @Column(name = "last_failed_login")
-    private LocalDateTime lastFailedLogin; // Дата последнего неудачного входа
+    @Column(name = "account_expired", nullable = false)
+    private boolean accountExpired = false; //аккаунт истек
 
-    @Column(name = "failed_login_attempts", nullable = false)
-    private int failedLoginAttempts = 0; // Количество неудачных попыток входа
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role = UserRole.ROLE_USER;
+    @Column(name = "credentials_expired", nullable = false)
+    private boolean credentialsExpired = false; //аккаунт истек
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_privileges",
-            joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "privilege")
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private Set<UserPrivilege> additionalPrivileges = new HashSet<>();
 
-    public boolean hasPrivilege(UserPrivilege privilege) {
-        return role.hasPrivilege(privilege) || additionalPrivileges.contains(privilege);
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true; //аккунт активен
+
+
+    @Column(name = "two_factor_enabled", nullable = false)
+    private boolean twoFactorEnabled = false; //двухфакторная аутентификация включена
+
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret; //секретный код для двухфакторной аутентификации
+
+
+    @Column(name = "password_reset_token")
+    private String passwordResetToken; //токен для сброса пароля
+
+
+    @Column(name = "password_reset_token_expiry")
+    private LocalDateTime passwordResetTokenExpiry; //срок действия токена для сброса пароля
+
+
+    @Column(name = "role", nullable = false)
+    private String role = "ROLE_USER"; //роль пользователя
+
+
+    @Override
+    public boolean isAccountNonExpired() { //аккаунт не истекает
+        return !accountExpired;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() { //
+        return !credentialsExpired;
+    }
+
+    @Override
+    public boolean isEnabled() { //аккаунт активен
+
+        return enabled;
+    }
+
+    @ManyToMany(fetch = FetchType.EAGER) //отношение многие ко многим с таблицей ролей и привилегий
+    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>(); //список ролей пользователя
+
+
+    @Transient
+    private Set<Privilege> privileges; //список привилегий пользователя
+
+
+    private Set<Group> groups = new HashSet<>(); //список групп пользователя
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() { //возвращает список ролей и привилегий пользователя
+
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        // Добавляем привилегии из ролей пользователя
+        authorities.addAll(getPrivileges().stream()
+                .map(privilege -> new SimpleGrantedAuthority(privilege.getName()))
+                .collect(Collectors.toSet()));
+
+        // Добавляем привилегии из групповых ролей
+        for (Group group : groups) {
+            for (Role role : group.getRoles()) {
+                authorities.addAll(role.getPrivileges().stream()
+                        .map(privilege -> new SimpleGrantedAuthority(privilege.getName()))
+                        .collect(Collectors.toSet()));
+            }
+        }
+
+        return authorities;
+    }
+
+    public Set<Privilege> getPrivileges() { //возвращает список привилегий пользователя
+
+        if (privileges == null) {
+            privileges = new HashSet<>();
+            for (Role role : roles) {
+                privileges.addAll(role.getPrivileges());
+            }
+        }
+        return privileges;
+    }
+
+    public boolean hasPrivilege(String privilegeName) { //проверяет наличие привилегии у пользователя
+
+        return getPrivileges().stream()
+                .anyMatch(p -> p.getName().equals(privilegeName));
     }
 
 }

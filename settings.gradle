@@ -1,0 +1,36 @@
+// Должен быть ПЕРВЫМ в файле
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    plugins {
+        id 'org.springframework.boot' version '3.4.2'
+        id 'io.spring.dependency-management' version '1.1.7'
+        id 'io.freefair.lombok' version '8.6'
+    }
+}
+
+// Остальные настройки ПОСЛЕ pluginManagement
+rootProject.name = 'AuthService'
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+    // Версионный каталог (необязательно, но рекомендуется)
+    versionCatalogs {
+        libs {
+            version('spring-boot', '3.4.2')
+            version('lombok', '1.18.30')
+            version('postgresql', '42.6.0')
+
+            library('spring-boot-starter-web', 'org.springframework.boot', 'spring-boot-starter-web').versionRef('spring-boot')
+            library('lombok-core', 'org.projectlombok', 'lombok').versionRef('lombok')
+            library('postgresql', 'org.postgresql', 'postgresql').versionRef('postgresql')
+        }
+    }
+}
+
+// Включение модулей (если есть подмодули)
+// include 'module1', 'module2'
