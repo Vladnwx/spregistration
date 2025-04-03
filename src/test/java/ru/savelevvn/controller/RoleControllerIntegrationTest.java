@@ -44,7 +44,10 @@ class RoleControllerIntegrationTest {
 
     @Test
     void getRole_WhenRoleExists_ShouldReturn200() throws Exception {
-        Role role = roleRepository.save(new Role(null, "ROLE_EXISTING", "Existing", Set.of()));
+        Role role = new Role();
+        role.setName("ROLE_EXISTING");
+        role.setDescription("Existing");
+        roleRepository.save(role);
 
         mockMvc.perform(get("/api/roles/" + role.getId()))
                 .andExpect(status().isOk())

@@ -14,6 +14,8 @@ plugins {
 
     // Плагин для управления миграциями базы данных
     id 'org.flywaydb.flyway' version '9.22.3'
+
+    id 'jacoco'
 }
 
 // Метаданные проекта
@@ -95,7 +97,7 @@ tasks.withType(JavaCompile).configureEach {
 // Настройки тестов
 test {
     useJUnitPlatform() // Используем JUnit 5 для тестирования
-
+    finalizedBy jacocoTestReport
     // Автоматически активируем test-профиль при запуске тестов
     systemProperty 'spring.profiles.active', 'test'
 }
@@ -208,6 +210,14 @@ task incrementMinorVersion {
         println "Минорная версия увеличена: ${version} → ${newVersion}"
     }
 }
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+check.dependsOn test
 
 // Для ручного увеличения минорной версии:
 // ./gradlew incrementMinorVersion
