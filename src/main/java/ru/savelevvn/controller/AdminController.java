@@ -12,17 +12,19 @@ import ru.savelevvn.service.UserService;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
-@Tag(name = "Admin", description = "Administrative endpoints")
+@Tag(name = "Administration", description = "Admin-only management endpoints")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final UserService userService;
 
     @Operation(
             summary = "Lock/unlock user account",
+            description = "Toggle user lock status (Admin only)",
             responses = {
                     @ApiResponse(responseCode = "204", description = "Operation successful"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden"),
                     @ApiResponse(responseCode = "404", description = "User not found")
             }
     )
@@ -36,8 +38,10 @@ public class AdminController {
 
     @Operation(
             summary = "Get system statistics",
+            description = "Retrieve system statistics (Admin only)",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Statistics retrieved")
+                    @ApiResponse(responseCode = "200", description = "Statistics retrieved"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden")
             }
     )
     @GetMapping("/statistics")
