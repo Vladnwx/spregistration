@@ -5,6 +5,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.*;
@@ -27,7 +28,6 @@ import java.util.stream.Collectors;
         @Index(name = "idx_user_username", columnList = "username")
 })
 @SQLDelete(sql = "UPDATE users SET enabled = false WHERE id = ?")
-@Where(clause = "enabled = true")
 public class User implements UserDetails {
     // Константа для максимального количества неудачных попыток входа
     public static final int MAX_FAILED_ATTEMPTS = 5;
@@ -43,7 +43,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Email
+    //@Email
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 

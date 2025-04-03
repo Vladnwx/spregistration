@@ -4,17 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.savelevvn.dto.AuthRequest;
-import ru.savelevvn.dto.AuthResponse;
-import ru.savelevvn.dto.RegisterRequest;
-import ru.savelevvn.dto.UserRequestDTO;
+import ru.savelevvn.dto.*;
 import ru.savelevvn.exception.UserAlreadyExistsException;
 import ru.savelevvn.model.User;
+import ru.savelevvn.repository.UserRepository;
 import ru.savelevvn.service.AuthService;
 import ru.savelevvn.service.JwtService;
-import ru.savelevvn.service.UserService;
 
 import java.time.LocalDateTime;
 
@@ -23,43 +21,41 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // Проверяем существование пользователя
-        if (userService.existsByUsername(request.getUsername())) {
-            log.info("Registering new user: {}", request.getUsername());
+        if (userRepository.existsByUsername(request.getUsername())) {
+            log.warn("Attempt to register existing username: {}", request.getUsername());
             throw new UserAlreadyExistsException("username", request.getUsername());
         }
 
-        if (userService.existsByEmail(request.getEmail())) {
-            log.info("Registering new user: {}", request.getEmail());
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Attempt to register existing email: {}", request.getEmail());
             throw new UserAlreadyExistsException("email", request.getEmail());
         }
 
-        // Создаем DTO для UserService
-        UserRequestDTO userDTO = new UserRequestDTO(
-                request.getUsername(),
-                request.getEmail(),
-                request.getPassword(),
-                null, // phoneNumber
-                true, // enabled
-                false // twoFactorEnabled
-        );
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword())) // Кодируем пароль
+                .enabled(true)
+                .build();
 
-        // Создаем пользователя
-        userService.createUser(userDTO);
-
-        // Получаем созданного пользователя
-        User user = userService.findByEmail(request.getEmail());
+        // Сохраняем пользователя
+        User savedUser = userRepository.save(user);
+        log.info("User created with ID: {}", savedUser.getId());
 
         // Генерируем токены
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateAccessToken(savedUser);
+        String refreshToken = jwtService.generateRefreshToken(savedUser);
+
+        log.debug("Tokens generated for user ID: {}", savedUser.getId());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -70,55 +66,72 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse authenticate(AuthRequest request) {
-        // Аутентифицируем пользователя
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        log.debug("Authentication attempt for user: {}", request.getUsername());
 
-        // Получаем пользователя
-        User user = userService.findByUsername(request.getUsername());
+        try {
+            // Аутентифицируем пользователя
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
 
-        // Обновляем данные аутентификации
-        userService.updateAuthenticationData(
-                user.getId(),
-                LocalDateTime.now(), // lastLogin
-                0, // failedAttempts
-                false // locked
-        );
+            // Получаем пользователя
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            log.debug("User authenticated: {}", user.getUsername());
 
-        // Генерируем новые токены
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+            // Обновляем данные аутентификации
+            user.setLastLogin(LocalDateTime.now());
+            user.setFailedLoginAttempts(0);
+            user.setLocked(false);
+            userRepository.save(user);
 
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+            // Генерируем новые токены
+            String accessToken = jwtService.generateAccessToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+
+            log.debug("New tokens generated for user: {}", user.getUsername());
+
+            return AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        } catch (Exception e) {
+            log.error("Authentication failed for user: {}", request.getUsername(), e);
+            throw new RuntimeException("Authentication failed");
+        }
     }
-
     @Override
+    @Transactional
     public AuthResponse refreshToken(String refreshToken) {
+        log.debug("Refreshing token");
+
         // Извлекаем имя пользователя из токена
         String username = jwtService.extractUsername(refreshToken);
 
         if (username == null) {
+            log.warn("Invalid refresh token - no username");
             throw new RuntimeException("Invalid refresh token");
         }
 
         // Получаем пользователя
-        User user = userService.findByUsername(username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        log.debug("User found for token refresh: {}", user.getUsername());
 
         // Проверяем валидность токена
         if (!jwtService.isTokenValid(refreshToken, user)) {
+            log.warn("Invalid refresh token for user: {}", user.getUsername());
             throw new RuntimeException("Invalid refresh token");
         }
 
         // Генерируем новые токены
         String newAccessToken = jwtService.generateAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        log.debug("Tokens refreshed for user: {}", user.getUsername());
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)

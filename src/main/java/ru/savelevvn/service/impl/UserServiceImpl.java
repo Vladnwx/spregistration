@@ -18,6 +18,7 @@ import ru.savelevvn.repository.*;
 import ru.savelevvn.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,13 +29,9 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
     @Transactional
+    @Override
     public UserResponseDTO createUser(UserRequestDTO userDTO) {
-        if (userRepository.existsByUsername(userDTO.username())) {
-            throw new UserAlreadyExistsException("username", userDTO.username());
-        }
-
         if (userRepository.existsByEmail(userDTO.email())) {
             throw new UserAlreadyExistsException("email", userDTO.email());
         }
@@ -42,15 +39,25 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .username(userDTO.username())
                 .password(passwordEncoder.encode(userDTO.password()))
-                .email(userDTO.email())
-                .phoneNumber(userDTO.phoneNumber())
-                .enabled(userDTO.enabled())
-                .twoFactorEnabled(userDTO.twoFactorEnabled())
-                .createdAt(LocalDateTime.now())
+                .email(userDTO.email()) // Исправлено: email берется из DTO
+                .enabled(true)
                 .build();
 
-        User savedUser = userRepository.save(user);
-        return mapToDTO(savedUser);
+        User savedUser = userRepository.saveAndFlush(user); // Используем saveAndFlush
+        log.info("Saved user with id: {}", savedUser.getId());
+
+        // Возвращаем DTO без дополнительных запросов к БД
+        return new UserResponseDTO(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getEmail(),
+                savedUser.getPhoneNumber(),
+                savedUser.getCreatedAt(),
+                savedUser.isEnabled(),
+                savedUser.isTwoFactorEnabled(),
+                Collections.emptySet(),
+                Collections.emptySet()
+        );
     }
 
     @Override
@@ -70,19 +77,19 @@ public class UserServiceImpl implements UserService {
 
         return mapToDTO(userRepository.save(user));
     }
-
+    @Transactional
     @Override
     public void deleteUser(Long id) {
 
     }
-
+    @Transactional
     @Override
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         return mapToDTO(user);
     }
-
+    @Transactional
     @Override
     public Page<UserResponseDTO> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
@@ -112,7 +119,7 @@ public class UserServiceImpl implements UserService {
         user.getRoles().remove(role);
         return mapToDTO(userRepository.save(user));
     }
-
+    @Transactional
     public UserResponseDTO mapToDTO(User user) {
         return new UserResponseDTO(
                 user.getId(),
@@ -130,7 +137,7 @@ public class UserServiceImpl implements UserService {
                         .collect(Collectors.toSet())
         );
     }
-
+    @Transactional
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
@@ -142,7 +149,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 
-    // Добавим метод для обновления данных аутентификации
+
     @Transactional
     public void updateAuthenticationData(Long userId, LocalDateTime lastLogin, int failedAttempts, boolean locked) {
         userRepository.findById(userId).ifPresent(user -> {
@@ -152,20 +159,22 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
         });
     }
-
+    @Transactional
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
     }
+    @Transactional
     @Override
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
-
+    @Transactional
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+    @Transactional
     @Override
     public SystemStatistics getSystemStatistics() {
         return SystemStatistics.builder()
