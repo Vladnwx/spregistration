@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.savelevvn.dto.UserRequestDTO;
 import ru.savelevvn.dto.UserResponseDTO;
 import ru.savelevvn.exception.NotFoundException;
+import ru.savelevvn.exception.UserAlreadyExistsException;
 import ru.savelevvn.model.*;
 import ru.savelevvn.repository.*;
 import ru.savelevvn.service.UserService;
@@ -26,6 +27,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO createUser(UserRequestDTO userDTO) {
+        if (userRepository.existsByUsername(userDTO.username())) {
+            throw new UserAlreadyExistsException("username", userDTO.username());
+        }
+
+        if (userRepository.existsByEmail(userDTO.email())) {
+            throw new UserAlreadyExistsException("email", userDTO.email());
+        }
+
         User user = User.builder()
                 .username(userDTO.username())
                 .password(passwordEncoder.encode(userDTO.password()))
