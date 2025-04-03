@@ -32,8 +32,6 @@ public class UserController {
             }
     )
 
-
-
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<UserResponseDTO> createUser(
