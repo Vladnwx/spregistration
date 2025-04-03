@@ -20,6 +20,7 @@ public class EnvLogger implements CommandLineRunner {
         System.out.println("JWT_SECRET: " + (env.getProperty("JWT_SECRET") != null ? "***hidden***" : null));
         System.out.println("ADMIN_USERNAME: " + env.getProperty("ADMIN_USERNAME"));
         System.out.println("ADMIN_PASSWORD: " + (env.getProperty("ADMIN_PASSWORD") != null ? "***hidden***" : null));
+        System.out.println("ADMIN_EMAIL: " + (env.getProperty("ADMIN_EMAIL")));
         System.out.println("=== Конец проверки ===\n");
         System.out.println("\n=== Проверка DataSource ===");
         System.out.println("Spring Datasource URL: " + env.getProperty("spring.datasource.url"));
