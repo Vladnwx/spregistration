@@ -1,6 +1,7 @@
 package ru.savelevvn.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import ru.savelevvn.model.Privilege;
 import ru.savelevvn.repository.PrivilegeRepository;
 import ru.savelevvn.service.PrivilegeService;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PrivilegeServiceImpl implements PrivilegeService {

@@ -18,44 +18,52 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Поиск по email (уникальное поле)
+    // Найти пользователя по email
     Optional<User> findByEmail(String email);
 
-    // Поиск по username (уникальное поле)
+    // Найти пользователя по username
     Optional<User> findByUsername(String username);
 
-    // Проверка существования email
+    // Проверить существование пользователя по email
     boolean existsByEmail(String email);
 
-    // Получение пользователей с пагинацией
+    // Получить всех пользователей с пагинацией
     Page<User> findAll(Pageable pageable);
 
-    // Фильтрация по enabled/disabled
+    // Фильтрация пользователей по состоянию enabled/disabled
     Page<User> findByEnabled(boolean enabled, Pageable pageable);
 
-    // Поиск по роли (через связь ManyToMany)
+    // Найти пользователей по названию роли (через ManyToMany связь)
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     Page<User> findByRoleName(@Param("roleName") String roleName, Pageable pageable);
 
-    // Обновление пароля
+    // Обновить пароль пользователя
     @Modifying
     @Query("UPDATE User u SET u.password = :password, u.passwordUpdatedAt = :now WHERE u.id = :id")
     void updatePassword(@Param("id") Long id, @Param("password") String password, @Param("now") LocalDateTime now);
 
-    // Блокировка/разблокировка пользователя
+    // Заблокировать/разблокировать пользователя
     @Modifying
     @Query("UPDATE User u SET u.locked = :locked, u.failedLoginAttempts = 0 WHERE u.id = :id")
     void setLockedStatus(@Param("id") Long id, @Param("locked") boolean locked);
 
-    // Обновление последнего входа
+    // Обновить последнее время входа
     @Modifying
     @Query("UPDATE User u SET u.lastLogin = :lastLogin WHERE u.id = :id")
     void updateLastLogin(@Param("id") Long id, @Param("lastLogin") LocalDateTime lastLogin);
 
-    // Сброс токена сброса пароля
+    // Очистить токен сброса пароля
     @Modifying
     @Query("UPDATE User u SET u.passwordResetToken = NULL, u.passwordResetTokenExpiry = NULL WHERE u.id = :id")
     void clearPasswordResetToken(@Param("id") Long id);
 
-    boolean existsByUsername(@NotBlank(message = "Username cannot be blank") @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters") @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers and underscores") String username);
+    // Проверить существование пользователя по username
+    boolean existsByUsername(
+            @NotBlank(message = "Username cannot be blank")
+            @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+            @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers and underscores")
+            String username
+    );
+    long countByEnabled(boolean enabled);
+    long countByLocked(boolean locked);
 }
