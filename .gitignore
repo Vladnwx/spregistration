@@ -46,3 +46,4 @@ src/main/resources/secret.properties
 /запрос к ai admin.txt
 /запрос к ai autch.txt
 /devdb.mv.db
+/devdb.trace.db
