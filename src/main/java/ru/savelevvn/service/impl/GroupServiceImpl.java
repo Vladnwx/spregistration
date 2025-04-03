@@ -80,18 +80,41 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public GroupResponseDTO removeRoleFromGroup(Long groupId, Long roleId) {
-        return null;
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        group.getRoles().remove(role);
+        // Обновляем роли у всех пользователей группы
+        group.getUsers().forEach(user -> user.getRoles().remove(role));
+        return mapToDTO(groupRepository.save(group));
     }
 
     @Override
+    @Transactional
     public GroupResponseDTO addUserToGroup(Long groupId, Long userId) {
-        return null;
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        group.addUser(user); // Метод addUser уже обновляет связи
+        return mapToDTO(groupRepository.save(group));
     }
 
     @Override
+    @Transactional
     public GroupResponseDTO removeUserFromGroup(Long groupId, Long userId) {
-        return null;
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        group.removeUser(user); // Метод removeUser уже обновляет связи
+        return mapToDTO(groupRepository.save(group));
     }
 
     private GroupResponseDTO mapToDTO(Group group) {

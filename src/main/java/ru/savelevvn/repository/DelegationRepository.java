@@ -31,4 +31,5 @@ public interface DelegationRepository extends JpaRepository<Delegation, Long> {
             @Param("end") LocalDateTime end,
             Pageable pageable
     );
+    Page<Delegation> findByDelegateIdAndActiveTrueAndEndTimeAfter(Long delegateId, LocalDateTime now, Pageable pageable);
 }

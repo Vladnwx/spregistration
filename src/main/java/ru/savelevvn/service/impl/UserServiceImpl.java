@@ -65,22 +65,39 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO getUserById(Long id) {
-        return null;
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        return mapToDTO(user);
     }
 
     @Override
     public Page<UserResponseDTO> getAllUsers(Pageable pageable) {
-        return null;
+        return userRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
 
     @Override
+    @Transactional
     public UserResponseDTO addRoleToUser(Long userId, Long roleId) {
-        return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        user.addRole(role);
+        return mapToDTO(userRepository.save(user));
     }
 
     @Override
+    @Transactional
     public UserResponseDTO removeRoleFromUser(Long userId, Long roleId) {
-        return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        user.getRoles().remove(role);
+        return mapToDTO(userRepository.save(user));
     }
 
     private UserResponseDTO mapToDTO(User user) {

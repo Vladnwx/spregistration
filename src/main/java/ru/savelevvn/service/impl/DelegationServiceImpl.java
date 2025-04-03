@@ -12,6 +12,8 @@ import ru.savelevvn.model.*;
 import ru.savelevvn.repository.*;
 import ru.savelevvn.service.DelegationService;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class DelegationServiceImpl implements DelegationService {
@@ -59,12 +61,14 @@ public class DelegationServiceImpl implements DelegationService {
 
     @Override
     public Page<DelegationResponseDTO> getAllDelegations(Pageable pageable) {
-        return null;
+        return delegationRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
 
     @Override
     public Page<DelegationResponseDTO> getActiveDelegationsForUser(Long userId, Pageable pageable) {
-        return null;
+        return delegationRepository.findByDelegateIdAndActiveTrueAndEndTimeAfter(userId, LocalDateTime.now(), pageable)
+                .map(this::mapToDTO);
     }
 
     private DelegationResponseDTO mapToDTO(Delegation delegation) {
