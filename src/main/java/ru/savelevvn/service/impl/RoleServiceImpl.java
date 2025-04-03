@@ -1,4 +1,4 @@
-package ru.savelevvn.service;
+package ru.savelevvn.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +12,7 @@ import ru.savelevvn.model.Privilege;
 import ru.savelevvn.model.Role;
 import ru.savelevvn.repository.PrivilegeRepository;
 import ru.savelevvn.repository.RoleRepository;
+import ru.savelevvn.service.RoleService;
 
 import java.util.stream.Collectors;
 
