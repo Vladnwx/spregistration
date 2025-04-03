@@ -42,6 +42,7 @@ public class Group {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(mappedBy = "groups", fetch = FetchType.LAZY)
@@ -49,9 +50,11 @@ public class Group {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<User> users = new HashSet<>();
 
     @Column(name = "is_system", nullable = false)
+    @Builder.Default
     private boolean system = false;
 
     // Методы для управления связями

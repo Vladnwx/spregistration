@@ -37,6 +37,7 @@ public class Role {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -51,6 +52,7 @@ public class Role {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<Privilege> privileges = new HashSet<>();
 
     // Методы для управления связями
