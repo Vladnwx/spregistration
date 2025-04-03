@@ -66,6 +66,12 @@ dependencies {
     //Интеграция Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
+    implementation 'org.hibernate.orm:hibernate-core:6.6.5.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+
+
+
     // ===== Тестирование =====
 
     // Интеграционные тесты

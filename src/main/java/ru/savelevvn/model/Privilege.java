@@ -36,6 +36,7 @@ public class Privilege {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
     // Метод для управления связями
@@ -43,4 +44,5 @@ public class Privilege {
         this.roles.add(role);
         role.getPrivileges().add(this);
     }
+
 }

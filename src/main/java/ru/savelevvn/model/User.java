@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
         @Index(name = "idx_user_email", columnList = "email"),
         @Index(name = "idx_user_username", columnList = "username")
 })
-@SQLDelete(sql = "UPDATE users SET enabled = false WHERE id = ?") // Мягкое удаление
-@Where(clause = "enabled = true") // Фильтр для мягкого удаления
+@SQLDelete(sql = "UPDATE users SET enabled = false WHERE id = ?")
+@Where(clause = "enabled = true")
 public class User implements UserDetails {
     // Константа для максимального количества неудачных попыток входа
     public static final int MAX_FAILED_ATTEMPTS = 5;
@@ -60,6 +60,7 @@ public class User implements UserDetails {
     @Column(name = "last_failed_login")
     private LocalDateTime lastFailedLogin;
 
+    @Builder.Default
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts = 0;
 
@@ -73,15 +74,19 @@ public class User implements UserDetails {
     @Column(name = "account_expires_at")
     private LocalDateTime accountExpiresAt;
 
+    @Builder.Default
     @Column(name = "account_expired", nullable = false)
     private boolean accountExpired = false;
 
+    @Builder.Default
     @Column(name = "credentials_expired", nullable = false)
     private boolean credentialsExpired = false;
 
+    @Builder.Default
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
+    @Builder.Default
     @Column(name = "two_factor_enabled", nullable = false)
     private boolean twoFactorEnabled = false;
 
@@ -94,6 +99,7 @@ public class User implements UserDetails {
     @Column(name = "password_reset_token_expiry")
     private LocalDateTime passwordResetTokenExpiry;
 
+    @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
@@ -106,9 +112,11 @@ public class User implements UserDetails {
     @Column(name = "two_factor_recovery_codes", length = 1000)
     private String twoFactorRecoveryCodes; // JSON-массив кодов
 
+    @Builder.Default
     @Column(name = "two_factor_verified", nullable = false)
     private boolean twoFactorVerified = false;
 
+    @Builder.Default
     @Column(name = "locked", nullable = false)
     private boolean locked = false;
 
@@ -124,6 +132,7 @@ public class User implements UserDetails {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -138,6 +147,7 @@ public class User implements UserDetails {
     @BatchSize(size = 20)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Builder.Default
     private Set<Group> groups = new HashSet<>();
 
     @Transient

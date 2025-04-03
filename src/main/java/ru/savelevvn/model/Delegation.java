@@ -44,6 +44,7 @@ public class Delegation {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
 

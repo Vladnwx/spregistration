@@ -45,3 +45,4 @@ src/main/resources/secret.properties
 /data/auth_service_dev.mv.db
 /запрос к ai admin.txt
 /запрос к ai autch.txt
+/devdb.mv.db
