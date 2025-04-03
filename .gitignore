@@ -40,3 +40,9 @@ bin/
 
 # Secret files
 secret.properties
+/.env.dev
+/.env.prod
+/devdb.mv.db
+/devdb.trace.db
+/запрос к ai autch.txt
+/data/auth_service_dev.mv.db
