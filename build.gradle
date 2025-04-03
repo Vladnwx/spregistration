@@ -1,115 +1,120 @@
-// Плагины для проекта
+// Базовые плагины для Spring Boot приложения
 plugins {
-    id 'java' // Базовый плагин для Java-проектов
-    id 'org.springframework.boot' version '3.4.2' // Плагин Spring Boot
-    id 'io.spring.dependency-management' version '1.1.7' // Управление версиями зависимостей Spring
-    id 'io.freefair.lombok' version '8.6' // Плагин для Lombok
-    id 'org.flywaydb.flyway' version '9.22.3' // плагин Flyway
+    // Основной плагин для Java проектов
+    id 'java'
+
+    // Плагин Spring Boot с указанием версии
+    id 'org.springframework.boot' version '3.4.2'
+
+    // Плагин для управления версиями зависимостей Spring
+    id 'io.spring.dependency-management' version '1.1.7'
+
+    // Плагин для автоматической генерации boilerplate-кода (геттеры, сеттеры и т.д.)
+    id 'io.freefair.lombok' version '8.6'
+
+    // Плагин для управления миграциями базы данных
+    id 'org.flywaydb.flyway' version '9.22.3'
 }
 
-// Основные настройки проекта
-group = 'ru.savelevvn' // Группа проекта (обычно домен наоборот)
-version = '1.0-SNAPSHOT' // Версия проекта (SNAPSHOT означает разработку)
+// Метаданные проекта
+group = 'ru.savelevvn' // Обычно используется обратный домен
+version = '1.0.0' // Начальная версия приложения
 
 // Репозитории для загрузки зависимостей
 repositories {
-    mavenCentral() // Основной репозиторий Maven
+    mavenCentral() // Основной репозиторий Maven-артефактов
 }
 
-// Зависимости проекта
+// Секция зависимостей проекта
 dependencies {
     // ===== Spring Boot стартеры =====
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // Spring Data JPA
-    implementation 'org.springframework.boot:spring-boot-starter-security' // Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-web' // Spring MVC
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleaf шаблонизатор
-    implementation 'org.springframework.boot:spring-boot-starter-validation' // Валидация данных
-    implementation 'org.springframework.boot:spring-boot-starter-mail' // Отправка email
 
-    // ===== Lombok =====
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    testCompileOnly 'org.projectlombok:lombok:1.18.30'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+    // Веб-приложение (REST API)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Безопасность (аутентификация/авторизация)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Работа с базами данных через JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Валидация входных данных
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Мониторинг и управление приложением
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // ===== Базы данных =====
-    runtimeOnly 'com.h2database:h2' // H2 для разработки (автоматически подключается в dev-профиле)
-    runtimeOnly 'org.postgresql:postgresql' // PostgreSQL для продакшена (используется в prod-профиле)
+
+    // Встроенная БД для разработки (dev-профиль)
+    runtimeOnly 'com.h2database:h2'
+
+    // PostgreSQL для продакшена (prod-профиль)
+    runtimeOnly 'org.postgresql:postgresql'
 
     // ===== JWT (JSON Web Tokens) =====
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // API для работы с JWT
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Реализация JWT
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // Jackson поддержка для JWT
+
+    // API для работы с JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+
+    // Реализация JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+
+    // Поддержка Jackson для JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // ===== Тестирование =====
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine' // Исключаем старый JUnit
-    }
-    testImplementation 'org.springframework.security:spring-security-test' // Тесты безопасности
-    testImplementation 'com.h2database:h2' // H2 для тестов (используется в test-профиле)
+
+    // Интеграционные тесты
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
-// Настройка тестов
-test {
-    useJUnitPlatform() // Используем JUnit 5
-    systemProperty 'spring.profiles.active', 'test' // Автоматически активируем test-профиль
+// Настройки Java
+java {
+    toolchain {
+        // Используем Java 17
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
-// Задача для применения миграций Flyway
+
+// Настройки компиляции
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17 // Целевая версия Java
+    options.encoding = 'UTF-8' // Кодировка исходных файлов
+}
+
+// Настройки тестов
+test {
+    useJUnitPlatform() // Используем JUnit 5 для тестирования
+
+    // Автоматически активируем test-профиль при запуске тестов
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+// Конфигурация Flyway для миграций базы данных
 flyway {
-    url = 'jdbc:postgresql://localhost:5432/auth_service'
-    user = 'admin'
-    password = 'admin'
+    // URL базы данных (берётся из переменных окружения или используется значение по умолчанию)
+    url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/auth_service'
+
+    // Пользователь БД
+    user = System.getenv('DB_USER') ?: 'admin'
+
+    // Пароль БД
+    password = System.getenv('DB_PASSWORD') ?: 'admin'
+
+    // Расположение файлов миграций
     locations = ['filesystem:src/main/resources/db/migration']
+
+    // Автоматическое создание baseline при первой миграции
     baselineOnMigrate = true
 }
 
-// ===== Кастомные задачи =====
-
-// Задача для увеличения минорной версии проекта
-task incrementMinorVersion {
-    doLast {
-        // Разбираем текущую версию на части
-        def versionParts = version.split("\\.")
-        def majorVersion = versionParts[0].toInteger()
-        def minorVersion = versionParts[1].split("-")[0].toInteger()
-        def newVersion = "${majorVersion}.${minorVersion + 1}-SNAPSHOT"
-
-        // Обновляем версию в build.gradle
-        def buildFile = file('build.gradle')
-        def updatedContent = buildFile.text.replace(
-                "version = '${version}'",
-                "version = '${newVersion}'"
-        )
-        buildFile.write(updatedContent)
-
-        println "Версия увеличена до: ${newVersion}"
-    }
-}
-
-// Настраиваем выполнение incrementMinorVersion после сборки
-build.finalizedBy incrementMinorVersion
-
-// Задача для автоматического коммита изменения версии
-task commitVersionChange {
-    doLast {
-        // Добавляем измененный файл в git
-        exec {
-            commandLine 'git', 'add', 'build.gradle'
-        }
-        // Создаем коммит
-        exec {
-            commandLine 'git', 'commit', '-m', "Автоматическое увеличение версии до ${version}"
-        }
-        println "Изменения версии закоммичены"
-    }
-}
-
-// ===== Задачи для запуска с разными профилями =====
-
-// Задача для запуска с dev-профилем (H2 в файловом режиме)
+// Задача для запуска с dev-профилем (H2)
 task bootRunDev(type: org.springframework.boot.gradle.tasks.run.BootRun) {
-    group = 'application' // Группа для организации задач
-    description = 'Запуск приложения с dev-профилем (H2 файловая БД)'
+    group = 'application' // Группа для организации задач в IDE
+    description = 'Запуск приложения с dev-профилем (H2)' // Описание задачи
+
+    // Активация dev-профиля
     systemProperty 'spring.profiles.active', 'dev'
 }
 
@@ -117,8 +122,83 @@ task bootRunDev(type: org.springframework.boot.gradle.tasks.run.BootRun) {
 task bootRunProd(type: org.springframework.boot.gradle.tasks.run.BootRun) {
     group = 'application'
     description = 'Запуск приложения с prod-профилем (PostgreSQL)'
+
+    // Активация prod-профиля
     systemProperty 'spring.profiles.active', 'prod'
-    // Можно добавить дополнительные параметры:
-    // systemProperty 'DB_HOST', 'localhost'
-    // systemProperty 'DB_PASSWORD', 'yourpassword'
 }
+
+// ===== Дополнительные настройки =====
+
+// Настройка задачи bootJar (сборка исполняемого JAR)
+bootJar {
+    // Название выходного файла
+    archiveFileName = "${project.name}.jar"
+
+    // Метаданные манифеста
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Main-Class': 'org.springframework.boot.loader.JarLauncher'
+        )
+    }
+}
+// ===== Автоматическое управление версиями =====
+
+// Задача для увеличения версии при сборке
+task incrementVersion {
+    doLast {
+        // Разбираем текущую версию на составляющие
+        def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
+
+        // Увеличиваем патч-версию (можно изменить на minor для минорных версий)
+        def newVersion = "${major}.${minor}.${patch + 1}"
+
+        // Обновляем версию в build.gradle
+        def buildFile = file('build.gradle')
+        def updatedContent = buildFile.text.replaceFirst(
+                "version = '${version}'",
+                "version = '${newVersion}'"
+        )
+        buildFile.write(updatedContent)
+
+        println "Версия увеличена: ${version} → ${newVersion}"
+    }
+}
+
+// Задача для создания тега версии в Git
+task tagVersion {
+    doLast {
+        exec {
+            commandLine 'git', 'tag', "-a", "v${version}", "-m", "Version ${version}"
+        }
+        println "Создан тег v${version}"
+    }
+}
+
+// Настройка порядка выполнения задач:
+// 1. Сначала сборка (build)
+// 2. Затем увеличение версии (incrementVersion)
+// 3. И создание тега (tagVersion)
+build.finalizedBy incrementVersion
+incrementVersion.finalizedBy tagVersion
+
+// Альтернативный вариант - увеличение минорной версии
+task incrementMinorVersion {
+    doLast {
+        def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
+        def newVersion = "${major}.${minor + 1}.0"
+
+        def buildFile = file('build.gradle')
+        def updatedContent = buildFile.text.replaceFirst(
+                "version = '${version}'",
+                "version = '${newVersion}'"
+        )
+        buildFile.write(updatedContent)
+
+        println "Минорная версия увеличена: ${version} → ${newVersion}"
+    }
+}
+
+// Для ручного увеличения минорной версии:
+// ./gradlew incrementMinorVersion

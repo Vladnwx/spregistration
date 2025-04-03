@@ -8,29 +8,49 @@ pluginManagement {
         id 'org.springframework.boot' version '3.4.2'
         id 'io.spring.dependency-management' version '1.1.7'
         id 'io.freefair.lombok' version '8.6'
+        id 'org.flywaydb.flyway' version '9.22.3' // Добавлен Flyway
     }
 }
 
 // Остальные настройки ПОСЛЕ pluginManagement
-rootProject.name = 'AuthService'
+rootProject.name = 'AuthApplication' // Имя корневого проекта
 
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
     }
-    // Версионный каталог (необязательно, но рекомендуется)
+
+    // Версионный каталог (рекомендуемый способ управления зависимостями)
     versionCatalogs {
         libs {
+            // Версии
             version('spring-boot', '3.4.2')
             version('lombok', '1.18.30')
             version('postgresql', '42.6.0')
+            version('h2', '2.2.224') // Добавлена H2
+            version('jjwt', '0.11.5') // Добавлен JWT
+            version('flyway', '9.22.3') // Добавлен Flyway
 
+            // Библиотеки Spring
             library('spring-boot-starter-web', 'org.springframework.boot', 'spring-boot-starter-web').versionRef('spring-boot')
-            library('lombok-core', 'org.projectlombok', 'lombok').versionRef('lombok')
+            library('spring-boot-starter-security', 'org.springframework.boot', 'spring-boot-starter-security').versionRef('spring-boot')
+            library('spring-boot-starter-data-jpa', 'org.springframework.boot', 'spring-boot-starter-data-jpa').versionRef('spring-boot')
+            library('spring-boot-starter-validation', 'org.springframework.boot', 'spring-boot-starter-validation').versionRef('spring-boot')
+            library('spring-boot-starter-actuator', 'org.springframework.boot', 'spring-boot-starter-actuator').versionRef('spring-boot')
+            library('spring-boot-starter-test', 'org.springframework.boot', 'spring-boot-starter-test').versionRef('spring-boot')
+
+            // Вспомогательные библиотеки
+            library('lombok', 'org.projectlombok', 'lombok').versionRef('lombok')
+            library('h2', 'com.h2database', 'h2').versionRef('h2')
             library('postgresql', 'org.postgresql', 'postgresql').versionRef('postgresql')
+
+            // JWT
+            library('jjwt-api', 'io.jsonwebtoken', 'jjwt-api').versionRef('jjwt')
+            library('jjwt-impl', 'io.jsonwebtoken', 'jjwt-impl').versionRef('jjwt')
+            library('jjwt-jackson', 'io.jsonwebtoken', 'jjwt-jackson').versionRef('jjwt')
+
+            // Flyway
+            library('flyway-core', 'org.flywaydb', 'flyway-core').versionRef('flyway')
         }
     }
 }
-
-// Включение модулей (если есть подмодули)
-// include 'module1', 'module2'

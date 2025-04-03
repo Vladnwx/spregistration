@@ -39,4 +39,9 @@ bin/
 .vscode/
 
 # Secret files
-secret.properties
+src/main/resources/secret.properties
+/.env.prod
+/.env.dev
+/data/auth_service_dev.mv.db
+/запрос к ai admin.txt
+/запрос к ai autch.txt

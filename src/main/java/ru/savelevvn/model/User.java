@@ -1,28 +1,37 @@
 package ru.savelevvn.model;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import lombok.Data;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Data
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users", indexes = {
         @Index(name = "idx_user_email", columnList = "email"),
         @Index(name = "idx_user_username", columnList = "username")
 })
+@SQLDelete(sql = "UPDATE users SET enabled = false WHERE id = ?") // Мягкое удаление
+@Where(clause = "enabled = true") // Фильтр для мягкого удаления
 public class User implements UserDetails {
+    // Константа для максимального количества неудачных попыток входа
+    public static final int MAX_FAILED_ATTEMPTS = 5;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,9 +39,11 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false, length = 50)
     private String username;
 
+    @Size(min = 8, max = 100)
     @Column(nullable = false)
-    private String password; 
+    private String password;
 
+    @Email
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 
@@ -41,125 +52,182 @@ public class User implements UserDetails {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; //дата и время создания аккаунта
+    private LocalDateTime createdAt;
 
     @Column(name = "last_login")
-    private LocalDateTime lastLogin; //последний успешный логин
+    private LocalDateTime lastLogin;
 
     @Column(name = "last_failed_login")
-    private LocalDateTime lastFailedLogin; //последний неудачный логин
+    private LocalDateTime lastFailedLogin;
 
     @Column(name = "failed_login_attempts", nullable = false)
-    private int failedLoginAttempts = 0; //количество неудачных попыток входа
+    private int failedLoginAttempts = 0;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; //время последнего обновления записи
-
+    private LocalDateTime updatedAt;
 
     @Column(name = "password_updated_at")
-    private LocalDateTime passwordUpdatedAt; //время последнего обновления пароля
-
+    private LocalDateTime passwordUpdatedAt;
 
     @Column(name = "account_expires_at")
-    private LocalDateTime accountExpiresAt; //время истечения аккаунта
+    private LocalDateTime accountExpiresAt;
 
     @Column(name = "account_expired", nullable = false)
-    private boolean accountExpired = false; //аккаунт истек
-
+    private boolean accountExpired = false;
 
     @Column(name = "credentials_expired", nullable = false)
-    private boolean credentialsExpired = false; //аккаунт истек
-
+    private boolean credentialsExpired = false;
 
     @Column(name = "enabled", nullable = false)
-    private boolean enabled = true; //аккунт активен
-
+    private boolean enabled = true;
 
     @Column(name = "two_factor_enabled", nullable = false)
-    private boolean twoFactorEnabled = false; //двухфакторная аутентификация включена
+    private boolean twoFactorEnabled = false;
 
-    @Column(name = "two_factor_secret")
-    private String twoFactorSecret; //секретный код для двухфакторной аутентификации
+    @Column(name = "two_factor_secret", length = 100)
+    private String twoFactorSecret;
 
-
-    @Column(name = "password_reset_token")
-    private String passwordResetToken; //токен для сброса пароля
-
+    @Column(name = "password_reset_token", length = 100)
+    private String passwordResetToken;
 
     @Column(name = "password_reset_token_expiry")
-    private LocalDateTime passwordResetTokenExpiry; //срок действия токена для сброса пароля
+    private LocalDateTime passwordResetTokenExpiry;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 
-    @Column(name = "role", nullable = false)
-    private String role = "ROLE_USER"; //роль пользователя
+    @Column(name = "email_verification_token", length = 100)
+    private String emailVerificationToken;
 
+    @Column(name = "email_verification_token_expiry")
+    private LocalDateTime emailVerificationTokenExpiry;
 
-    @Override
-    public boolean isAccountNonExpired() { //аккаунт не истекает
-        return !accountExpired;
-    }
+    @Column(name = "two_factor_recovery_codes", length = 1000)
+    private String twoFactorRecoveryCodes; // JSON-массив кодов
 
-    @Override
-    public boolean isCredentialsNonExpired() { //
-        return !credentialsExpired;
-    }
+    @Column(name = "two_factor_verified", nullable = false)
+    private boolean twoFactorVerified = false;
 
-    @Override
-    public boolean isEnabled() { //аккаунт активен
+    @Column(name = "locked", nullable = false)
+    private boolean locked = false;
 
-        return enabled;
-    }
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"),
+            foreignKey = @ForeignKey(name = "fk_users_roles_user"),
+            inverseForeignKey = @ForeignKey(name = "fk_users_roles_role")
+    )
+    @Fetch(FetchMode.SUBSELECT)
+    @BatchSize(size = 20)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER) //отношение многие ко многим с таблицей ролей и привилегий
-    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>(); //список ролей пользователя
-
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_groups",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id"),
+            foreignKey = @ForeignKey(name = "fk_users_groups_user"),
+            inverseForeignKey = @ForeignKey(name = "fk_users_groups_group")
+    )
+    @Fetch(FetchMode.SUBSELECT)
+    @BatchSize(size = 20)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Group> groups = new HashSet<>();
 
     @Transient
-    private Set<Privilege> privileges; //список привилегий пользователя
+    @EqualsAndHashCode.Exclude
+    private transient Set<Privilege> privileges;
 
-
-    private Set<Group> groups = new HashSet<>(); //список групп пользователя
-
-
+    // UserDetails methods
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() { //возвращает список ролей и привилегий пользователя
-
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();
 
-        // Добавляем привилегии из ролей пользователя
+        // Роли пользователя
+        authorities.addAll(roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toSet()));
+
+        // Привилегии из ролей
         authorities.addAll(getPrivileges().stream()
                 .map(privilege -> new SimpleGrantedAuthority(privilege.getName()))
                 .collect(Collectors.toSet()));
 
-        // Добавляем привилегии из групповых ролей
-        for (Group group : groups) {
-            for (Role role : group.getRoles()) {
-                authorities.addAll(role.getPrivileges().stream()
-                        .map(privilege -> new SimpleGrantedAuthority(privilege.getName()))
-                        .collect(Collectors.toSet()));
-            }
-        }
+        // Привилегии из групп
+        groups.forEach(group ->
+                group.getRoles().forEach(role ->
+                        authorities.addAll(role.getPrivileges().stream()
+                                .map(privilege -> new SimpleGrantedAuthority(privilege.getName()))
+                                .collect(Collectors.toSet()))
+                )
+        );
 
-        return authorities;
+        return Collections.unmodifiableSet(authorities);
     }
 
-    public Set<Privilege> getPrivileges() { //возвращает список привилегий пользователя
-
+    public Set<Privilege> getPrivileges() {
         if (privileges == null) {
-            privileges = new HashSet<>();
-            for (Role role : roles) {
-                privileges.addAll(role.getPrivileges());
-            }
+            privileges = roles.stream()
+                    .flatMap(role -> role.getPrivileges().stream())
+                    .collect(Collectors.toSet());
         }
         return privileges;
     }
 
-    public boolean hasPrivilege(String privilegeName) { //проверяет наличие привилегии у пользователя
-
-        return getPrivileges().stream()
-                .anyMatch(p -> p.getName().equals(privilegeName));
+    // Методы управления связями
+    public void addRole(Role role) {
+        roles.add(role);
+        role.getUsers().add(this);
     }
 
+    public void addGroup(Group group) {
+        groups.add(group);
+        group.getUsers().add(this);
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return !accountExpired && (accountExpiresAt == null || accountExpiresAt.isAfter(LocalDateTime.now()));
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked && failedLoginAttempts < MAX_FAILED_ATTEMPTS;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return !credentialsExpired;
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lastFailedLogin = null;
+    }
+
+    public void incrementFailedLoginAttempts() {
+        this.failedLoginAttempts++;
+        this.lastFailedLogin = LocalDateTime.now();
+
+        // Автоматическая блокировка при превышении лимита
+        if (this.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+            this.locked = true;
+        }
+    }
+    public void generateRecoveryCodes() {
+        List<String> codes = new ArrayList<>();
+        SecureRandom random = new SecureRandom();
+
+        for (int i = 0; i < 10; i++) {
+            codes.add(String.format("%06d", random.nextInt(1_000_000)));
+        }
+
+        this.twoFactorRecoveryCodes = String.join(",", codes);
+    }
 }
