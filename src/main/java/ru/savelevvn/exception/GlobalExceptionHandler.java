@@ -4,6 +4,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,22 +42,51 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    @ExceptionHandler({
+            AccessDeniedException.class,
+            TokenRefreshException.class
+    })
+    public ResponseEntity<ErrorResponse> handleForbiddenExceptions(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse("Access denied", "ACCESS_DENIED"));
+                .body(new ErrorResponse(ex.getMessage(), "ACCESS_DENIED"));
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse(ex.getMessage(), "USER_EXISTS"));
+    @ExceptionHandler({
+            AuthenticationException.class,
+            InvalidTokenException.class,
+            BadCredentialsException.class
+    })
+    public ResponseEntity<ErrorResponse> handleUnauthorizedExceptions(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(ex.getMessage(), "AUTH_ERROR"));
     }
 
-    @ExceptionHandler(InvalidOperationException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidOperation(InvalidOperationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(ex.getMessage(), "INVALID_OPERATION"));
+    @ExceptionHandler({
+            UserAlreadyExistsException.class,
+            PasswordMismatchException.class,
+            InvalidOperationException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(RuntimeException ex) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse(ex.getMessage(), "BAD_REQUEST"));
+    }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleLockedException(AccountLockedException ex) {
+        return ResponseEntity.status(HttpStatus.LOCKED)
+                .body(new ErrorResponse(ex.getMessage(), "ACCOUNT_LOCKED"));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitException(RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErrorResponse(ex.getMessage(), "RATE_LIMIT"));
+    }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<ErrorResponse> handleEmailException(EmailSendingException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ex.getMessage(), "EMAIL_ERROR"));
     }
 
     @ExceptionHandler(Exception.class)
