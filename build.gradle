@@ -63,6 +63,9 @@ dependencies {
     // Поддержка Jackson для JWT
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
+    //Интеграция Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
     // ===== Тестирование =====
 
     // Интеграционные тесты
