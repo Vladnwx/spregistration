@@ -18,9 +18,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/roles/**").permitAll() // Временное решение!
-                        .anyRequest().authenticated()
+                        .requestMatchers("/**").permitAll() // Временное решение!
+                     //   .anyRequest().authenticated()
                 );
         return http.build();
     }
