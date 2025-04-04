@@ -1,5 +1,7 @@
 package ru.savelevvn.model;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
@@ -28,96 +30,122 @@ import java.util.stream.Collectors;
         @Index(name = "idx_user_username", columnList = "username")
 })
 @SQLDelete(sql = "UPDATE users SET enabled = false WHERE id = ?")
+@Schema(description = "Сущность пользователя системы")
 public class User implements UserDetails {
     // Константа для максимального количества неудачных попыток входа
     public static final int MAX_FAILED_ATTEMPTS = 5;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Уникальный идентификатор пользователя", example = "1")
     private Long id;
 
     @Column(unique = true, nullable = false, length = 50)
+    @Schema(description = "Уникальное имя пользователя", example = "john_doe", required = true)
     private String username;
 
     @Size(min = 8, max = 100)
     @Column(nullable = false)
+    @Schema(description = "Пароль пользователя (мин. 8 символов)", example = "securePassword123!", required = true)
     private String password;
 
     //@Email
     @Column(unique = true, nullable = false, length = 100)
+    @Schema(description = "Email пользователя", example = "user@example.com", required = true)
     private String email;
 
     @Column(name = "phone_number", length = 20)
+    @Schema(description = "Номер телефона пользователя", example = "+79123456789")
     private String phoneNumber;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Schema(description = "Дата и время создания пользователя", example = "2023-01-01T12:00:00")
     private LocalDateTime createdAt;
 
     @Column(name = "last_login")
+    @Schema(description = "Дата и время последнего успешного входа", example = "2023-01-02T15:30:00")
     private LocalDateTime lastLogin;
 
     @Column(name = "last_failed_login")
+    @Schema(description = "Дата и время последней неудачной попытки входа", example = "2023-01-02T15:25:00")
     private LocalDateTime lastFailedLogin;
 
     @Builder.Default
     @Column(name = "failed_login_attempts", nullable = false)
+    @Schema(description = "Количество неудачных попыток входа", example = "0")
     private int failedLoginAttempts = 0;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
+    @Schema(description = "Дата и время последнего обновления пользователя", example = "2023-01-02T10:00:00")
     private LocalDateTime updatedAt;
 
     @Column(name = "password_updated_at")
+    @Schema(description = "Дата и время последнего изменения пароля", example = "2023-01-01T12:00:00")
     private LocalDateTime passwordUpdatedAt;
 
     @Column(name = "account_expires_at")
+    @Schema(description = "Дата и время истечения срока действия аккаунта", example = "2024-01-01T00:00:00")
     private LocalDateTime accountExpiresAt;
 
     @Builder.Default
     @Column(name = "account_expired", nullable = false)
+    @Schema(description = "Флаг истечения срока действия аккаунта", example = "false")
     private boolean accountExpired = false;
 
     @Builder.Default
     @Column(name = "credentials_expired", nullable = false)
+    @Schema(description = "Флаг истечения срока действия учетных данных", example = "false")
     private boolean credentialsExpired = false;
 
     @Builder.Default
     @Column(name = "enabled", nullable = false)
+    @Schema(description = "Флаг активности аккаунта", example = "true")
     private boolean enabled = true;
 
     @Builder.Default
     @Column(name = "two_factor_enabled", nullable = false)
+    @Schema(description = "Флаг использования двухфакторной аутентификации", example = "false")
     private boolean twoFactorEnabled = false;
 
     @Column(name = "two_factor_secret", length = 100)
+    @Schema(description = "Секрет для двухфакторной аутентификации")
     private String twoFactorSecret;
 
     @Column(name = "password_reset_token", length = 100)
+    @Schema(description = "Токен для сброса пароля")
     private String passwordResetToken;
 
     @Column(name = "password_reset_token_expiry")
+    @Schema(description = "Срок действия токена сброса пароля", example = "2023-01-02T18:00:00")
     private LocalDateTime passwordResetTokenExpiry;
 
     @Builder.Default
     @Column(name = "email_verified", nullable = false)
+    @Schema(description = "Флаг подтверждения email", example = "false")
     private boolean emailVerified = false;
 
     @Column(name = "email_verification_token", length = 100)
+    @Schema(description = "Токен для подтверждения email")
     private String emailVerificationToken;
 
     @Column(name = "email_verification_token_expiry")
+    @Schema(description = "Срок действия токена подтверждения email", example = "2023-01-02T18:00:00")
     private LocalDateTime emailVerificationTokenExpiry;
 
     @Column(name = "two_factor_recovery_codes", length = 1000)
+    @Schema(description = "Коды восстановления для двухфакторной аутентификации (JSON-массив)")
     private String twoFactorRecoveryCodes; // JSON-массив кодов
 
     @Builder.Default
     @Column(name = "two_factor_verified", nullable = false)
+    @Schema(description = "Флаг подтверждения двухфакторной аутентификации", example = "false")
     private boolean twoFactorVerified = false;
 
     @Builder.Default
     @Column(name = "locked", nullable = false)
+    @Schema(description = "Флаг блокировки аккаунта", example = "false")
     private boolean locked = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -133,6 +161,7 @@ public class User implements UserDetails {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ArraySchema(arraySchema = @Schema(description = "Роли пользователя"))
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -148,10 +177,12 @@ public class User implements UserDetails {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ArraySchema(arraySchema = @Schema(description = "Группы пользователя"))
     private Set<Group> groups = new HashSet<>();
 
     @Transient
     @EqualsAndHashCode.Exclude
+    @Schema(description = "Привилегии пользователя", accessMode = Schema.AccessMode.READ_ONLY)
     private transient Set<Privilege> privileges;
 
     // UserDetails methods
