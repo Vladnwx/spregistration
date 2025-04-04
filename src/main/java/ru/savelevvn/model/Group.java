@@ -1,5 +1,7 @@
 package ru.savelevvn.model;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Table;
@@ -17,17 +19,25 @@ import java.util.Set;
 @Table(name = "groups")
 @SQLDelete(sql = "UPDATE groups SET name = CONCAT(name, '_DELETED_', CURRENT_TIMESTAMP) WHERE id = ?")
 @Where(clause = "name NOT LIKE '%_DELETED_%'")
+@Schema(description = "Сущность группы пользователей в системе")
 public class Group {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Уникальный идентификатор группы", example = "1")
     private Long id;
 
     @NaturalId
     @Column(nullable = false, unique = true, length = 100)
+    @Schema(
+            description = "Уникальное название группы",
+            example = "ADMINISTRATORS",
+            required = true
+    )
     private String name;
 
     @Column(length = 500)
+    @Schema(description = "Описание группы", example = "Группа администраторов системы")
     private String description;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -43,6 +53,7 @@ public class Group {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ArraySchema(arraySchema = @Schema(description = "Роли, назначенные этой группе"))
     private Set<Role> roles = new HashSet<>();
 
     @ManyToMany(mappedBy = "groups", fetch = FetchType.LAZY)
@@ -51,13 +62,16 @@ public class Group {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ArraySchema(arraySchema = @Schema(description = "Пользователи, входящие в эту группу", accessMode = Schema.AccessMode.READ_ONLY))
     private Set<User> users = new HashSet<>();
 
     @Column(name = "is_system", nullable = false)
     @Builder.Default
+    @Schema(description = "Флаг системной группы (нельзя редактировать)", example = "false")
     private boolean system = false;
 
     // Методы для управления связями
+    @Schema(hidden = true)
     public void addRole(Role role) {
         this.roles.add(role);
         // Обновляем связь на стороне Role через пользователей
@@ -67,6 +81,7 @@ public class Group {
         });
     }
 
+    @Schema(hidden = true)
     public void addUser(User user) {
         this.users.add(user);
         user.getGroups().add(this);
@@ -76,7 +91,7 @@ public class Group {
             role.getUsers().add(user);
         });
     }
-
+    @Schema(hidden = true)
     public void removeUser(User user) {
         this.users.remove(user);
         user.getGroups().remove(this);
@@ -88,11 +103,13 @@ public class Group {
     }
 
     // Проверка наличия роли в группе
+    @Schema(hidden = true)
     public boolean hasRole(Role role) {
         return this.roles.contains(role);
     }
 
     // Проверка наличия привилегии в группе
+    @Schema(hidden = true)
     public boolean hasPrivilege(String privilegeName) {
         return this.roles.stream()
                 .flatMap(role -> role.getPrivileges().stream())
@@ -100,6 +117,7 @@ public class Group {
     }
 
     // Метод для проверки, можно ли изменять группу
+    @Schema(hidden = true)
     public boolean isEditable() {
         return !system; // Системные группы нельзя редактировать
     }
