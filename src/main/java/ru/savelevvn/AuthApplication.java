@@ -9,3 +9,5 @@ public class AuthApplication {
         SpringApplication.run(AuthApplication.class, args);
     }
 }
+
+//curl -u admin:adminadmin http://localhost:8080/v3/api-docs.yaml -o src/main/resources/api/openapi.yml

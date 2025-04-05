@@ -1,5 +1,4 @@
 import org.springframework.boot.gradle.tasks.run.BootRun
-
 // Базовые плагины для Spring Boot приложения
 plugins {
     // Основной плагин для Java проектов
@@ -102,13 +101,63 @@ java {
 // Настройки компиляции
 tasks.withType(JavaCompile).configureEach {
     options.release = 17 // Целевая версия Java
-    options.encoding = 'UTF-8' // Кодировка исходных файлов
+   // options.encoding = 'UTF-8' // Кодировка исходных файлов
+}
+
+// Конфигурация OpenAPI Generation
+task generateOpenApiSpec {
+    doLast {
+        def outputFile = file("src/main/resources/api/openapi.yml")
+        outputFile.parentFile.mkdirs()
+
+        new URL("http://localhost:8080/v3/api-docs.yaml")
+                .openConnection()
+                .with {
+                    // Basic Auth
+                    String auth = "admin:adminadmin"
+                    String encoded = auth.bytes.encodeBase64().toString()
+                    setRequestProperty("Authorization", "Basic ${encoded}")
+
+                    // Получаем содержимое
+                    outputFile.text = content.text
+                }
+
+        println "OpenAPI spec saved to ${outputFile.absolutePath}"
+    }
+}
+
+// Конфигурация генерации кода из OpenAPI
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = layout.projectDirectory.file("src/main/resources/api/openapi.yml").asFile.absolutePath
+    outputDir = layout.buildDirectory.dir("generated").get().asFile.absolutePath
+    apiPackage = 'ru.savelevvn.api'
+    modelPackage = 'ru.savelevvn.model'
+    configOptions = [
+            useSpringBoot3: "true",
+            interfaceOnly: "true",
+            skipDefaultInterface: "true",
+            openApiNullable: "false",
+            useTags: "true",
+            useSpringController: "true",
+            unhandledException: "true"
+    ]
+    globalProperties = [
+            modelDocs: "false",
+            apis: "true",
+            models: "true"
+    ]
+}
+
+// Очистка
+tasks.clean {
+    delete layout.buildDirectory.dir("generated")
+    delete layout.projectDirectory.dir("src/main/resources/api")
 }
 
 // Настройки тестов
 test {
     useJUnitPlatform() // Используем JUnit 5 для тестирования
-
     // Автоматически активируем test-профиль при запуске тестов
     systemProperty 'spring.profiles.active', 'test'
 }
@@ -214,12 +263,15 @@ tasks.register('incrementMinorVersion') {
     }
 }
 
+
+
 // Настройка порядка выполнения задач:
 // 1. Сначала сборка (build)
 // 2. Затем увеличение версии (incrementVersion)
 // 3. И создание тега (tagVersion)
 build.finalizedBy incrementVersion
 incrementVersion.finalizedBy tagVersion
+
 
 // Для ручного увеличения минорной версии:
 // ./gradlew incrementMinorVersion
