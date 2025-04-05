@@ -28,5 +28,4 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     @Query("SELECT r FROM Role r JOIN r.privileges p WHERE p.id = :privilegeId")
     Page<Role> findByPrivilegeId(@Param("privilegeId") Long privilegeId, Pageable pageable);
 
-    long countByActive(boolean active);
 }
