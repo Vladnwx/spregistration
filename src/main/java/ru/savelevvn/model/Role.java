@@ -78,4 +78,18 @@ public class Role {
         this.users.add(user);
         user.getRoles().add(this);
     }
+
+    @PrePersist
+    @PreUpdate
+    private void validateName() {
+        if (!name.startsWith("ROLE_") || !name.matches("^ROLE_[A-Z_]+$")) {
+            throw new IllegalArgumentException("Role name must start with ROLE_ and contain only uppercase letters and underscores");
+        }
+    }
+
+    public void setPrivileges(Set<Privilege> privileges) {
+        this.privileges.clear();
+        this.privileges.addAll(privileges);
+        privileges.forEach(p -> p.getRoles().add(this));
+    }
 }

@@ -6,7 +6,9 @@
   ##      ##  ##                 ##  ##  ##    ####    ##         ##     ##        ####     ####    ##  ##
  ####      ######           ######    #####     ##      #####    ####     #####     ##       ##     ##  ##
 
-Version: ${version}
-Spring Boot: ${spring-boot.version}
-Application: ${spring.application.name}
-Profile: ${spring.profiles.active}
+:: Приложение        :: ${appName}
+:: Версия           :: ${appVersion}
+:: Spring Boot       :: ${springBootVersion}
+:: Дата сборки      :: ${buildDate}
+:: Java версия      :: ${javaVersion}
+:: ОС               :: ${osName}

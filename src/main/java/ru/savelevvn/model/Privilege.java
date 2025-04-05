@@ -57,4 +57,12 @@ public class Privilege {
         role.getPrivileges().add(this);
     }
 
+    @PrePersist
+    @PreUpdate
+    private void validateName() {
+        if (!name.matches("^[A-Z_]+$")) {
+            throw new IllegalArgumentException("Privilege name must be uppercase with underscores");
+        }
+    }
+
 }

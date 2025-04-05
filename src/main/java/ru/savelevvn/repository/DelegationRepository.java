@@ -15,8 +15,12 @@ import java.util.List;
 public interface DelegationRepository extends JpaRepository<Delegation, Long> {
 
     // Поиск активных делегаций для пользователя
-    @Query("SELECT d FROM Delegation d WHERE d.delegate.id = :userId AND d.active = true AND d.endTime > CURRENT_TIMESTAMP")
-    List<Delegation> findActiveDelegationsForUser(@Param("userId") Long userId);
+    @Query("SELECT d FROM Delegation d WHERE d.delegate.id = :userId AND d.active = true AND d.endTime > :now")
+    List<Delegation> findActiveDelegationsForUser(@Param("userId") Long userId, @Param("now") LocalDateTime now);
+
+    //
+    @Query("SELECT d FROM Delegation d WHERE d.delegate.id = :userId AND d.privilege.id = :privilegeId AND d.active = :active")
+    List<Delegation> findByDelegateAndPrivilegeAndActive(@Param("userId") Long userId, @Param("privilegeId") Long privilegeId, @Param("active") boolean active);
 
     // Пагинация делегаций
     Page<Delegation> findAll(Pageable pageable);
@@ -31,5 +35,10 @@ public interface DelegationRepository extends JpaRepository<Delegation, Long> {
             @Param("end") LocalDateTime end,
             Pageable pageable
     );
+
+    //
     Page<Delegation> findByDelegateIdAndActiveTrueAndEndTimeAfter(Long delegateId, LocalDateTime now, Pageable pageable);
+
+    //
+    boolean existsByDelegateIdAndActiveTrueAndEndTimeAfter(Long delegateId, LocalDateTime now);
 }
