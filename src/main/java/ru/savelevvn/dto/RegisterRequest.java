@@ -14,20 +14,36 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "User registration request")
+@Schema(description = "Запрос на регистрацию пользователя")
 public class RegisterRequest {
-    @NotBlank(message = "Username cannot be blank")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers and underscores")
-    @Schema(description = "Username (3-50 chars)", example = "user123", required = true)
+    @Schema(
+            description = "Имя пользователя (3-50 символов, только буквы, цифры и подчеркивания)",
+            example = "user123",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    @NotBlank(message = "Имя пользователя не может быть пустым")
+    @Size(min = 3, max = 50, message = "Имя пользователя должно быть от 3 до 50 символов")
+    @Pattern(
+            regexp = "^[a-zA-Z0-9_]+$",
+            message = "Имя пользователя может содержать только буквы, цифры и подчеркивания"
+    )
     private String username;
 
-    @NotBlank(message = "Email cannot be blank")
-    //@Email
-    @Schema(description = "Valid email address", example = "user@example.com", required = true)
+    @Schema(
+            description = "Email пользователя (должен быть валидным)",
+            example = "user@example.com",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    @NotBlank(message = "Email не может быть пустым")
+    @Email(message = "Email должен быть валидным")
     private String email;
 
-    @NotBlank(message = "Password cannot be blank")
-    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+    @Schema(
+            description = "Пароль (8-100 символов)",
+            example = "SecurePassword123!",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    @NotBlank(message = "Пароль не может быть пустым")
+    @Size(min = 8, max = 100, message = "Пароль должен быть от 8 до 100 символов")
     private String password;
 }
