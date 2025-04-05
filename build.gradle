@@ -12,6 +12,8 @@ plugins {
     id 'io.freefair.lombok' version '8.6'
     // Плагин для управления миграциями базы данных
     id 'org.flywaydb.flyway' version '9.22.3'
+
+    id "org.openapi.generator" version "7.3.0"
 }
 
 ext {
