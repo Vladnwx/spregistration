@@ -18,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "groups")
 @SQLDelete(sql = "UPDATE groups SET name = CONCAT(name, '_DELETED_', CURRENT_TIMESTAMP) WHERE id = ?")
-@Where(clause = "name NOT LIKE '%_DELETED_%'")
+@SQLRestriction("name NOT LIKE '%_DELETED_%'")
 @Schema(description = "Сущность группы пользователей в системе")
 public class Group {
 

@@ -19,7 +19,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "roles")
 @SQLDelete(sql = "UPDATE roles SET name = CONCAT(name, '_DELETED_', CURRENT_TIMESTAMP) WHERE id = ?")
-@Where(clause = "name NOT LIKE '%_DELETED_%'")
+@SQLRestriction("name NOT LIKE '%_DELETED_%'")
 @Schema(description = "Сущность роли пользователя в системе")
 public class Role {
 

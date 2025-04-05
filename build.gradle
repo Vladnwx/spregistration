@@ -101,6 +101,7 @@ java {
 // Настройки компиляции
 tasks.withType(JavaCompile).configureEach {
     options.release = 17 // Целевая версия Java
+    options.compilerArgs << "-Xlint:deprecation"
    // options.encoding = 'UTF-8' // Кодировка исходных файлов
 }
 

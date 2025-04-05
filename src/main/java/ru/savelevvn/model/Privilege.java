@@ -18,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "privileges")
 @SQLDelete(sql = "UPDATE privileges SET name = CONCAT(name, '_DELETED_', CURRENT_TIMESTAMP) WHERE id = ?")
-@Where(clause = "name NOT LIKE '%_DELETED_%'")
+@SQLRestriction("name NOT LIKE '%_DELETED_%'")
 @Schema(description = "Сущность привилегии (права доступа) в системе")
 public class Privilege {
 
