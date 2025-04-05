@@ -16,6 +16,33 @@ plugins {
     id "org.openapi.generator" version "7.3.0"
 }
 
+openApiGenerate {
+    generatorName = "spring" // Генератор для Spring Boot
+    inputSpec = layout.projectDirectory.file("src/main/resources/api/openapi.yml").asFile.absolutePath // Путь к спецификации
+    outputDir = layout.buildDirectory.dir("generated").get().asFile.absolutePath // Папка для сгенерированного кода
+    apiPackage = "ru.savelevvn.api" // Пакет для API-интерфейсов
+    modelPackage = "ru.savelevvn.model" // Пакет для DTO
+    configOptions = [
+            useSpringBoot3: "true",
+            interfaceOnly: "true", // Генерировать только интерфейсы
+            skipDefaultInterface: "true",
+            openApiNullable: "false", // Отключить поддержку nullable-полей
+            useTags: "true" // Группировать API по тегам
+    ]
+    globalProperties = [
+            modelDocs: "false" // Отключить генерацию документации моделей
+    ]
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir layout.buildDirectory.dir("generated/src/main/java")
+        }
+    }
+}
+
+
 ext {
     springBootVersion = '3.2.5'
 }
@@ -112,18 +139,20 @@ flyway {
     baselineOnMigrate = true
 }
 // Задача для запуска с dev-профилем (H2)
-task bootRunDev(type: BootRun, dependsOn: 'build') {
+tasks.register('bootRunDev', BootRun) {
+    dependsOn 'build'
     group = 'application'
     description = 'Запуск с H2 (dev профиль)'
-    mainClass = 'ru.savelevvn.Application'
+    mainClass = 'ru.savelevvn.AuthApplication'
     classpath = sourceSets.main.runtimeClasspath
     systemProperty 'spring.profiles.active', 'dev'
 }
 // Задача для запуска с prod-профилем (PostgreSQL)
-task bootRunProd(type: BootRun, dependsOn: 'build') {
+tasks.register('bootRunProd', BootRun) {
+    dependsOn 'build'
     group = 'application'
     description = 'Запуск с PostgreSQL (prod профиль)'
-    mainClass = 'ru.savelevvn.Application'
+    mainClass = 'ru.savelevvn.AuthApplication'
     classpath = sourceSets.main.runtimeClasspath
     systemProperty 'spring.profiles.active', 'prod'
 }
@@ -144,7 +173,7 @@ bootJar {
 }
 // ===== Автоматическое управление версиями =====
 // Задача для увеличения версии при сборке
-task incrementVersion {
+tasks.register('incrementVersion') {
     doLast {
         // Разбираем текущую версию на составляющие
         def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
@@ -160,7 +189,7 @@ task incrementVersion {
     }
 }
 // Задача для создания тега версии в Git
-task tagVersion {
+tasks.register('tagVersion') {
     doLast {
         exec {
             commandLine 'git', 'tag', "-a", "v${version}", "-m", "Version ${version}"
@@ -169,7 +198,7 @@ task tagVersion {
     }
 }
 // Альтернативный вариант - увеличение минорной версии
-task incrementMinorVersion {
+tasks.register('incrementMinorVersion') {
     doLast {
         def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
         def newVersion = "${major}.${minor + 1}.0"
