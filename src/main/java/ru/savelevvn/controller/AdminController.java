@@ -19,6 +19,7 @@ public class AdminController {
 
     private final UserService userService;
 
+
     @Operation(
             summary = "Lock/unlock user account",
             description = "Toggle user lock status (Admin only)",

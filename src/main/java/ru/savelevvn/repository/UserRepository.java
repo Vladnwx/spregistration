@@ -34,7 +34,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByEnabled(boolean enabled, Pageable pageable);
 
     // Найти пользователей по названию роли (через ManyToMany связь)
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
+    @Query("SELECT DISTINCT u FROM User u JOIN FETCH u.roles r WHERE r.name = :roleName")
     Page<User> findByRoleName(@Param("roleName") String roleName, Pageable pageable);
 
     // Обновить пароль пользователя
@@ -66,4 +66,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     );
     long countByEnabled(boolean enabled);
     long countByLocked(boolean locked);
+
+    @Query("SELECT u FROM User u WHERE LOWER(u.email) LIKE LOWER(concat('%', :email, '%'))")
+    Page<User> findByEmailContainingIgnoreCase(@Param("email") String email, Pageable pageable);
+
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.id <> :userId")
+    boolean existsByEmailAndIdNot(@Param("email") String email, @Param("userId") Long userId);
+
+    Page<User> findByLastLoginBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    Page<User> findAllByOrderByUsernameAsc(Pageable pageable);
+
 }

@@ -6,8 +6,6 @@ import jakarta.persistence.*;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.*;
@@ -270,5 +268,9 @@ public class User implements UserDetails {
         }
 
         this.twoFactorRecoveryCodes = String.join(",", codes);
+    }
+
+    public boolean isPasswordExpired(int maxDays) {
+        return passwordUpdatedAt.isBefore(LocalDateTime.now().minusDays(maxDays));
     }
 }

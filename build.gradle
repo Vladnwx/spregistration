@@ -1,19 +1,21 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 // Базовые плагины для Spring Boot приложения
 plugins {
     // Основной плагин для Java проектов
     id 'java'
-
     // Плагин Spring Boot с указанием версии
     id 'org.springframework.boot' version '3.2.5'
-
     // Плагин для управления версиями зависимостей Spring
     id 'io.spring.dependency-management' version '1.1.7'
-
     // Плагин для автоматической генерации boilerplate-кода (геттеры, сеттеры и т.д.)
     id 'io.freefair.lombok' version '8.6'
-
     // Плагин для управления миграциями базы данных
     id 'org.flywaydb.flyway' version '9.22.3'
+}
+
+ext {
+    springBootVersion = '3.2.5'
 }
 
 // Метаданные проекта
@@ -28,50 +30,32 @@ repositories {
 // Секция зависимостей проекта
 dependencies {
     // ===== Spring Boot стартеры =====
-
     // Веб-приложение (REST API)
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
     // Безопасность (аутентификация/авторизация)
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
     // Работа с базами данных через JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
     // Валидация входных данных
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-
     // Мониторинг и управление приложением
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-    // ===== Базы данных =====
-
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     // Встроенная БД для разработки (dev-профиль)
     runtimeOnly 'com.h2database:h2'
-
     // PostgreSQL для продакшена (prod-профиль)
     runtimeOnly 'org.postgresql:postgresql'
-
-    // ===== JWT (JSON Web Tokens) =====
-
     // Реализация JWT
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
     //Интеграция Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-
-    implementation 'org.hibernate.orm:hibernate-core:6.6.5.Final'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'com.zaxxer:HikariCP:5.1.0'
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
-    implementation 'org.springframework:spring-webmvc:6.1.6'
-
-    // ===== Тестирование =====
-
+    //implementation 'org.hibernate.orm:hibernate-core:6.6.5.Final'
+    //implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.zaxxer:HikariCP'
+   // implementation 'org.springframework:spring-webmvc:6.1.6'
     // Интеграционные тесты
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
@@ -98,81 +82,81 @@ test {
     systemProperty 'spring.profiles.active', 'test'
 }
 
+// Конфигурация баннера
+processResources {
+    filesMatching('**/banner.txt') {
+        expand(
+                'appName': project.name,
+                'appVersion': project.version,
+                'buildDate': new Date().format("yyyy-MM-dd HH:mm:ss"),
+                'javaVersion': System.getProperty('java.version'),
+                'osName': System.getProperty('os.name'),
+                'springBootVersion': springBootVersion
+        )
+    }
+}
+
 // Конфигурация Flyway для миграций базы данных
 flyway {
     // URL базы данных (берётся из переменных окружения или используется значение по умолчанию)
     url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/auth_service'
-
     // Пользователь БД
     user = System.getenv('DB_USER') ?: 'admin'
-
     // Пароль БД
     password = System.getenv('DB_PASSWORD') ?: 'admin'
-
     // Расположение файлов миграций
     locations = ['filesystem:src/main/resources/db/migration']
-
     // Автоматическое создание baseline при первой миграции
     baselineOnMigrate = true
 }
-
 // Задача для запуска с dev-профилем (H2)
-task bootRunDev(type: org.springframework.boot.gradle.tasks.run.BootRun) {
-    group = 'application' // Группа для организации задач в IDE
-    description = 'Запуск приложения с dev-профилем (H2)' // Описание задачи
-
-    // Активация dev-профиля
+task bootRunDev(type: BootRun, dependsOn: 'build') {
+    group = 'application'
+    description = 'Запуск с H2 (dev профиль)'
+    mainClass = 'ru.savelevvn.Application'
+    classpath = sourceSets.main.runtimeClasspath
     systemProperty 'spring.profiles.active', 'dev'
 }
-
 // Задача для запуска с prod-профилем (PostgreSQL)
-task bootRunProd(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+task bootRunProd(type: BootRun, dependsOn: 'build') {
     group = 'application'
-    description = 'Запуск приложения с prod-профилем (PostgreSQL)'
-
-    // Активация prod-профиля
+    description = 'Запуск с PostgreSQL (prod профиль)'
+    mainClass = 'ru.savelevvn.Application'
+    classpath = sourceSets.main.runtimeClasspath
     systemProperty 'spring.profiles.active', 'prod'
 }
-
-// ===== Дополнительные настройки =====
-
 // Настройка задачи bootJar (сборка исполняемого JAR)
 bootJar {
-    // Название выходного файла
     archiveFileName = "${project.name}.jar"
-
-    // Метаданные манифеста
     manifest {
         attributes(
                 'Implementation-Title': project.name,
                 'Implementation-Version': project.version,
+                'Build-Date': new Date().format("yyyy-MM-dd HH:mm:ss"),
+                'Built-By': System.getProperty('user.name'),
+                'Created-By': "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk': System.getProperty('java.version'),
                 'Main-Class': 'org.springframework.boot.loader.JarLauncher'
         )
     }
 }
 // ===== Автоматическое управление версиями =====
-
 // Задача для увеличения версии при сборке
 task incrementVersion {
     doLast {
         // Разбираем текущую версию на составляющие
         def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
-
         // Увеличиваем патч-версию (можно изменить на minor для минорных версий)
         def newVersion = "${major}.${minor}.${patch + 1}"
-
         // Обновляем версию в build.gradle
-        def buildFile = file('build.gradle')
-        def updatedContent = buildFile.text.replaceFirst(
-                "version = '${version}'",
-                "version = '${newVersion}'"
+        ant.replace(
+                file: 'build.gradle',
+                token: "version = '${version}'",
+                value: "version = '${newVersion}'"
         )
-        buildFile.write(updatedContent)
-
         println "Версия увеличена: ${version} → ${newVersion}"
     }
 }
-
 // Задача для создания тега версии в Git
 task tagVersion {
     doLast {
@@ -180,6 +164,20 @@ task tagVersion {
             commandLine 'git', 'tag', "-a", "v${version}", "-m", "Version ${version}"
         }
         println "Создан тег v${version}"
+    }
+}
+// Альтернативный вариант - увеличение минорной версии
+task incrementMinorVersion {
+    doLast {
+        def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
+        def newVersion = "${major}.${minor + 1}.0"
+
+        ant.replace(
+                file: 'build.gradle',
+                token: "version = '${version}'",
+                value: "version = '${newVersion}'"
+        )
+        println "Минорная версия увеличена: ${version} → ${newVersion}"
     }
 }
 
@@ -190,22 +188,6 @@ task tagVersion {
 build.finalizedBy incrementVersion
 incrementVersion.finalizedBy tagVersion
 
-// Альтернативный вариант - увеличение минорной версии
-task incrementMinorVersion {
-    doLast {
-        def (major, minor, patch) = version.tokenize('.').collect { it.toInteger() }
-        def newVersion = "${major}.${minor + 1}.0"
-
-        def buildFile = file('build.gradle')
-        def updatedContent = buildFile.text.replaceFirst(
-                "version = '${version}'",
-                "version = '${newVersion}'"
-        )
-        buildFile.write(updatedContent)
-
-        println "Минорная версия увеличена: ${version} → ${newVersion}"
-    }
-}
-
 // Для ручного увеличения минорной версии:
 // ./gradlew incrementMinorVersion
+
