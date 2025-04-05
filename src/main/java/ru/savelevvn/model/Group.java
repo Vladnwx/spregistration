@@ -121,4 +121,15 @@ public class Group {
     public boolean isEditable() {
         return !system; // Системные группы нельзя редактировать
     }
+
+    @PrePersist
+    @PreUpdate
+    private void validateName() {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name cannot be empty");
+        }
+    }
+
+
+
 }

@@ -92,4 +92,15 @@ public class Delegation {
         return endTime.isAfter(startTime) &&
                 startTime.isAfter(LocalDateTime.now().minusYears(1)); // Максимум 1 год вперед
     }
+
+    @PrePersist
+    @PreUpdate
+    private void validateTimeRange() {
+        if (endTime.isBefore(startTime)) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+    }
+
+    @Version
+    private Long version;
 }
